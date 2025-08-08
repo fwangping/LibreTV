@@ -159,7 +159,7 @@ const API_SITES = {
     },
     huangcang: {
         api: 'https://hsckzy.vip',
-        name: '黄色仓库',
+        name: '成人仓库',
         adult: true,
         detail: 'https://hsckzy.vip'
     },
@@ -273,5 +273,5 @@ const CUSTOM_API_CONFIG = {
     adultPropName: 'isAdult' // 用于标记成人内容的属性名
 };
 
-// 隐藏内置黄色采集站API的变量
+// 隐藏内置成人采集站API的变量
 const HIDE_BUILTIN_ADULT_APIS = false;
