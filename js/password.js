@@ -1,3 +1,9 @@
+// 密码保护配置
+const PASSWORD_CONFIG = {
+    localStorageKey: 'passwordVerified', // localStorage 存储 key
+    verificationTTL: 24 * 60 * 60 * 1000 // 验证有效期，单位毫秒，这里设为 24 小时
+};
+
 // 密码保护功能
 
 /**
@@ -91,8 +97,6 @@ function isPasswordVerified() {
 }
 
 // 更新全局导出
-window.isPasswordProtected = isPasswordProtected;
-window.isPasswordRequired = isPasswordRequired;
 window.isPasswordVerified = isPasswordVerified;
 window.verifyPassword = verifyPassword;
 window.ensurePasswordProtection = ensurePasswordProtection;
@@ -105,7 +109,6 @@ async function sha256(message) {
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
-    // HTTP 下调用原始 js‑sha256
     if (typeof window._jsSha256 === 'function') {
         return window._jsSha256(message);
     }
@@ -118,29 +121,24 @@ async function sha256(message) {
 function showPasswordModal() {
     const passwordModal = document.getElementById('passwordModal');
     if (passwordModal) {
-        // 防止出现豆瓣区域滚动条
-        document.getElementById('doubanArea').classList.add('hidden');
-        document.getElementById('passwordCancelBtn').classList.add('hidden');
+        document.getElementById('doubanArea')?.classList.add('hidden');
+        document.getElementById('passwordCancelBtn')?.classList.add('hidden');
 
-        // 检查是否需要强制设置密码
         if (isPasswordRequired()) {
-            // 修改弹窗内容提示用户需要先设置密码
             const title = passwordModal.querySelector('h2');
             const description = passwordModal.querySelector('p');
             if (title) title.textContent = '需要设置密码';
             if (description) description.textContent = '请先在部署平台设置 PASSWORD 环境变量来保护您的实例';
             
-            // 隐藏密码输入框和提交按钮，只显示提示信息
             const form = passwordModal.querySelector('form');
             const errorMsg = document.getElementById('passwordError');
             if (form) form.style.display = 'none';
             if (errorMsg) {
                 errorMsg.textContent = '为确保安全，必须设置 PASSWORD 环境变量才能使用本服务，请联系管理员进行配置';
+                errorMsg.className = 'text-red-500 mt-2 font-medium';
                 errorMsg.classList.remove('hidden');
-                errorMsg.className = 'text-red-500 mt-2 font-medium'; // 改为更醒目的红色
             }
         } else {
-            // 正常的密码验证模式
             const title = passwordModal.querySelector('h2');
             const description = passwordModal.querySelector('p');
             if (title) title.textContent = '访问验证';
@@ -151,15 +149,10 @@ function showPasswordModal() {
         }
 
         passwordModal.style.display = 'flex';
-
-        // 只有在非强制设置密码模式下才聚焦输入框
         if (!isPasswordRequired()) {
-            // 确保输入框获取焦点
             setTimeout(() => {
                 const passwordInput = document.getElementById('passwordInput');
-                if (passwordInput) {
-                    passwordInput.focus();
-                }
+                passwordInput?.focus();
             }, 100);
         }
     }
@@ -171,41 +164,26 @@ function showPasswordModal() {
 function hidePasswordModal() {
     const passwordModal = document.getElementById('passwordModal');
     if (passwordModal) {
-        // 隐藏密码错误提示
         hidePasswordError();
-
-        // 清空密码输入框
         const passwordInput = document.getElementById('passwordInput');
         if (passwordInput) passwordInput.value = '';
 
         passwordModal.style.display = 'none';
-
-        // 如果启用豆瓣区域则显示豆瓣区域
         if (localStorage.getItem('doubanEnabled') === 'true') {
-            document.getElementById('doubanArea').classList.remove('hidden');
-            initDouban();
+            document.getElementById('doubanArea')?.classList.remove('hidden');
+            initDouban?.();
         }
     }
 }
 
 /**
- * 显示密码错误信息
+ * 显示/隐藏密码错误信息
  */
 function showPasswordError() {
-    const errorElement = document.getElementById('passwordError');
-    if (errorElement) {
-        errorElement.classList.remove('hidden');
-    }
+    document.getElementById('passwordError')?.classList.remove('hidden');
 }
-
-/**
- * 隐藏密码错误信息
- */
 function hidePasswordError() {
-    const errorElement = document.getElementById('passwordError');
-    if (errorElement) {
-        errorElement.classList.add('hidden');
-    }
+    document.getElementById('passwordError')?.classList.add('hidden');
 }
 
 /**
@@ -213,11 +191,9 @@ function hidePasswordError() {
  */
 async function handlePasswordSubmit() {
     const passwordInput = document.getElementById('passwordInput');
-    const password = passwordInput ? passwordInput.value.trim() : '';
+    const password = passwordInput?.value.trim() || '';
     if (await verifyPassword(password)) {
         hidePasswordModal();
-
-        // 触发密码验证成功事件
         document.dispatchEvent(new CustomEvent('passwordVerified'));
     } else {
         showPasswordError();
@@ -232,20 +208,9 @@ async function handlePasswordSubmit() {
  * 初始化密码验证系统
  */
 function initPasswordProtection() {
-    // 如果需要强制设置密码，显示警告弹窗
-    if (isPasswordRequired()) {
+    if (isPasswordRequired() || (isPasswordProtected() && !isPasswordVerified())) {
         showPasswordModal();
-        return;
-    }
-    
-    // 如果设置了密码但用户未验证，显示密码输入框
-    if (isPasswordProtected() && !isPasswordVerified()) {
-        showPasswordModal();
-        return;
     }
 }
 
-// 在页面加载完成后初始化密码保护
-document.addEventListener('DOMContentLoaded', function () {
-    initPasswordProtection();
-});
+document.addEventListener('DOMContentLoaded', initPasswordProtection);
