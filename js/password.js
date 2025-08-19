@@ -48,7 +48,13 @@ async function verifyPassword(password) {
         const correctHash = window.__ENV__?.PASSWORD;
         if (!correctHash) return false;
 
-        const inputHash = await sha256(password);
+        // 浏览器内置 SHA-256
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
         const isValid = inputHash === correctHash;
 
         if (isValid) {
