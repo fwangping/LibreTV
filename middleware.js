@@ -2,6 +2,9 @@ import { sha256 } from './js/sha256.js'; // 需新建或引入SHA-256实现
 
 // Vercel Middleware to inject environment variables
 export default async function middleware(request) {
+  // 调试日志：输出请求 URL
+  console.log("DEBUG >>> request url:", request.url);
+
   // Get the URL from the request
   const url = new URL(request.url);
   
@@ -23,12 +26,17 @@ export default async function middleware(request) {
   // Get the HTML content
   const originalHtml = await response.text();
   
+  // 调试日志：输出环境变量 PASSWORD
+  console.log("DEBUG >>> PASSWORD env:", process.env.PASSWORD);
+
   // Replace the placeholder with actual environment variable
   // If PASSWORD is not set, replace with empty string
   const password = process.env.PASSWORD || '';
   let passwordHash = '';
   if (password) {
     passwordHash = await sha256(password);
+    // 调试日志：输出计算后的哈希值
+    console.log("DEBUG >>> password SHA-256 hash:", passwordHash);
   }
   
   // 替换密码占位符
